@@ -38,3 +38,11 @@ Numbers are bits per sample (smaller is better)
 |TomsDiner|7.034|7.108|7.087|
 |velvet|9.875|9.990|10.059|
 |*Mean*|**8.415**|8.493|8.580|
+
+## Compile
+
+To compile SAC audio codec executable program, use for GCC with G++ command by:
+
+```
+g++ main.cpp cmdline.cpp ./common/*.cpp ./file/*.cpp ./libsac/*.cpp ./model/*.cpp ./pred/*.cpp -std=c++11 -static -O3 -osac
+```
