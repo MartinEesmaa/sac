@@ -18,6 +18,7 @@ class Predictor {
       double beta_sum0,beta_pow0,beta_add0;
       double mix_nu0,mix_nu1;
       int bias_rescale;
+      double bias_mu;
     };
     Predictor(const tparam &p);
     double PredictMaster();
@@ -32,7 +33,7 @@ class Predictor {
     LMSCascade lms0,lms1;
     BiasEstimator be0,be1;
     vec1D hist0,hist1; //,tbuf;
-    double p_lpc0,p_lpc1,p_lms0,p_lms1;
+    double p_lpc0,p_lpc1,p_lms0,p_lms1,p_be0,p_be1;
 };
 
 #endif // PRED_H

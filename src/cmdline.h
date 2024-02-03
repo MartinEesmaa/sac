@@ -9,14 +9,17 @@ const char SACHelp[] =
 "usage: sac [--options] input output\n\n"
 "  --help           print this message\n"
 "  --encode         encode input.wav to output.sac (default)\n"
-"   --normal        normal compression (default)\n"
-"   --high          high compression, slow\n"
-"   --optimize=#    enable frame-based optimization\n"
-"     #=fast|normal|high|veryhigh|insane\n"
-"   --sparse-pcm    enable pcm modelling\n"
+"    --normal       normal compression (default)\n"
+"    --high         high compression, slow\n"
+"    --veryhigh     very high compression, really slow\n"
+"    --best         why even bother\n"
 "  --decode         decode input.sac to output.wav\n"
-"  --list           list info about input.[wav|sac]\n"
-"  --listfull       verbose info about input\n\n";
+"  --list           list info about input.sac\n"
+"  --listfull       verbose info about input\n\n"
+"  advanced options (automatically set)\n"
+"   --optimize=#    frame-based optimization\n"
+"     #=fast|normal|high|veryhigh|insane\n"
+"   --sparse-pcm    enable pcm modelling\n";
 
 class CmdLine {
   enum CMODE {ENCODE,DECODE,LIST,LISTFULL};

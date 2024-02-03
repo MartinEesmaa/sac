@@ -2,6 +2,7 @@
 #include "common/utils.h"
 #include "common/timer.h"
 #include "file/sac.h"
+#include <cstring>
 
 CmdLine::CmdLine()
 :mode(ENCODE)
@@ -120,27 +121,53 @@ int CmdLine::Parse(int argc,char *argv[])
     std::string key,val;
     Split(uparam,key,val);
     if (param.length()>1 && (param[0]=='-' && param[1]=='-')) {
-      if (key=="--HELP") {
+       if (key=="--ENCODE") mode=ENCODE;
+       else if (key=="--HELP") {
         std::cout << SACHelp;
         return 1;
       }
-      else if (key=="--ENCODE") mode=ENCODE;
-      else if (key=="--DECODE") mode=DECODE;
-      else if (key=="--LIST") mode=LIST;
-      else if (key=="--LISTFULL") mode=LISTFULL;
-      else if (key=="--NORMAL") opt.profile=0;
-      else if (key=="--HIGH") opt.profile=1;
-      else if (key=="--OPTIMIZE") {
-        opt.optimize=1;
-        if (val=="FAST") opt.optimize_mode=0;
-        else if (val=="NORMAL") opt.optimize_mode=1;
-        else if (val=="HIGH") opt.optimize_mode=2;
-        else if (val=="VERYHIGH") opt.optimize_mode=3;
-        else if (val=="INSANE") opt.optimize_mode=4;
-        else std::cout << "warning: unknown optimize mode '" << val << "'\n";
-      }
-      else if (key=="--SPARSE-PCM") opt.sparse_pcm=1;
-      else std::cout << "warning: unknown option '" << param << "'\n";
+       else if (key=="--DECODE") mode=DECODE;
+       else if (key=="--LIST") mode=LIST;
+       else if (key=="--LISTFULL") mode=LISTFULL;
+       else if (key=="--VERBOSE") {
+          if (val.length()) opt.verbose_level=stoi(val);
+          else opt.verbose_level=0;
+       }
+       else if (key=="--NORMAL") opt.profile=0;
+       else if (key=="--HIGH")
+       {
+         opt.profile=1;
+         opt.optimize=1;
+         opt.optimize_mode=0;
+         opt.sparse_pcm=0;
+       } else if (key=="--VERYHIGH") {
+         opt.profile=1;
+         opt.optimize=1;
+         opt.optimize_mode=2;
+         opt.sparse_pcm=1;
+       } else if (key=="--BEST") {
+         opt.profile=1;
+         opt.optimize=1;
+         opt.optimize_mode=3;
+         opt.sparse_pcm=1;
+       } else if (key=="--OPTIMIZE") {
+         opt.optimize=1;
+         if (val=="FAST") {
+           opt.optimize_mode=0;
+         } else if (val=="NORMAL") {
+           opt.optimize_mode=1;
+         } else if (val=="HIGH") {
+           opt.optimize_mode=2;
+         } else if (val=="VERYHIGH") {
+           opt.optimize_mode=3;
+         } else if (val=="INSANE") {
+           opt.optimize_mode=4;
+         } else std::cout << "warning: unknown optimize mode '" << val << "'\n";
+       }
+       else if (key=="--SPARSE-PCM") {
+          if (val.length()) opt.sparse_pcm=stoi(val);
+          else opt.sparse_pcm=1;
+       } else std::cout << "warning: unknown option '" << param << "'\n";
     } else {
        if (first) {sinputfile=param;first=false;}
        else soutputfile=param;
@@ -149,6 +176,20 @@ int CmdLine::Parse(int argc,char *argv[])
   }
   return 0;
 }
+
+/*#include "common/md5.h"
+void MD5Test()
+{
+  MD5::MD5Context ctx;
+  MD5::Init(&ctx);
+  //md5 '123'=202cb962ac59075b964b07152d234b70
+  std::vector<uint8_t> x={'1','2','3'};
+  MD5::Update(&ctx,&x[0],3);
+  std::vector <uint8_t> out(16);
+  MD5::Finalize(&ctx);
+  for (auto x : ctx.digest) std::cout << std::hex << (int)x;
+  std::cout << '\n';
+}*/
 
 int CmdLine::Process()
 {
@@ -196,7 +237,6 @@ int CmdLine::Process()
            Codec myCodec;
 
            myCodec.EncodeFile(myWav,mySac,opt);
-
            uint64_t infilesize=myWav.getFileSize();
            uint64_t outfilesize=mySac.readFileSize();
            double r=0.,bps=0.;
@@ -217,6 +257,9 @@ int CmdLine::Process()
       std::streampos FileSizeSAC = mySac.getFileSize();
       std::cout << "ok (" << FileSizeSAC << " Bytes)\n";
       if (mySac.ReadHeader()==0) {
+        uint8_t md5digest[16];
+        mySac.ReadMD5(md5digest);
+
         double bps=(static_cast<double>(FileSizeSAC)*8.0)/static_cast<double>(mySac.getNumSamples()*mySac.getNumChannels());
         int kbps=round((mySac.getSampleRate()*mySac.getNumChannels()*bps)/1000);
         mySac.setKBPS(kbps);
@@ -228,18 +271,32 @@ int CmdLine::Process()
         }
         std::cout << std::endl;
         std::cout << "  Ratio:   " << std::fixed << std::setprecision(3) << bps << " bits per sample\n\n";
+        std::cout << "  Audio MD5: ";
+        for (auto x : md5digest) std::cout << std::hex << (int)x;
+        std::cout << std::dec << '\n';
 
 
         if (mode==LISTFULL) {
           Codec myCodec;
           myCodec.ScanFrames(mySac);
         } else if (mode==DECODE) {
+
           Wav myWav(mySac);
           std::cout << "Create: '" << soutputfile << "': ";
           if (myWav.OpenWrite(soutputfile)==0) {
             std::cout << "ok\n";
             Codec myCodec;
             myCodec.DecodeFile(mySac,myWav);
+            MD5::Finalize(&myWav.md5ctx);
+            bool md5diff=std::memcmp(myWav.md5ctx.digest, md5digest, 16);
+            std::cout << '\n';
+            std::cout << "  Audio MD5: ";
+            if (!md5diff) std::cout << "ok\n";
+            else {
+              std::cout << "Error (";
+              for (auto x : myWav.md5ctx.digest) std::cout << std::hex << (int)x;
+              std::cout << std::dec << ")\n";
+            }
             myWav.Close();
           } else std::cout << "could not create\n";
         }
