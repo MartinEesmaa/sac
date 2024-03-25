@@ -47,3 +47,18 @@ To compile SAC audio codec executable program, use for GCC with G++ command by:
 ```
 g++ main.cpp cmdline.cpp ./common/*.cpp ./file/*.cpp ./libsac/*.cpp ./model/*.cpp ./pred/*.cpp -std=c++11 -static -O2 -s -osac
 ```
+
+For compiling Android binaries, please add additional commands on Clang++ to avoid TLS segment underaligned and merge with G++ same commands:
+
+```
+-ffunction-sections -fdata-sections -Wl,--gc-sections
+```
+
+Example merged commands:
+```
+aarch64-linux-android21-clang++ main.cpp cmdline.cpp ./common/*.cpp ./file/*.cpp ./libsac/*.cpp ./model/*.cpp ./pred/*.cpp -std=c++11 -static -ffunction-sections -fdata-sections -Wl,--gc-sections -O2 -s -osac_android-arm64
+```
+
+Android Clang++ can be found there in root directory, example:
+
+`android-ndk-r24/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang++`
