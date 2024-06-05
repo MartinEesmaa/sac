@@ -11,7 +11,7 @@ class Opt {
     double xmin,xmax;
   };
   public:
-    inline static const std::string SLOPT_VERSION="0.1.1";
+    static const std::string SLOPT_VERSION;
     typedef std::pair<double,vec1D> opt_ret;
     typedef std::vector <tboxconst> box_const;
     typedef std::function<double(const vec1D &param)> opt_func;
@@ -62,5 +62,7 @@ class Opt {
     Random rand;
     const box_const pb;
 };
+
+const std::string Opt::SLOPT_VERSION = "0.1.1";
 
 #endif
