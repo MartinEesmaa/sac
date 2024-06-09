@@ -1,6 +1,8 @@
 #include "wav.h"
 #include "../common/utils.h"
 #include <iostream>
+#include <iomanip>
+#include <sstream>
 
 int word_align(int numbytes)
 {
@@ -183,8 +185,16 @@ int Wav::ReadHeader()
                int channel_mask=BitUtils::get32LH(buf+20);
                int data_fmt=BitUtils::get16LH(buf+24);
                if (verbose) {
-                 std::cout << "  audio format=" << std::format("{:#x}",audioformat);
-                 std::cout << ",channel mask=" << std::format("{:#x}",channel_mask);
+                 std::stringstream ss;
+                 ss << std::hex << std::showbase << audioformat;
+                 std::string audioformat_str = ss.str();
+                 ss.str("");
+                 ss.clear();
+                 ss << std::hex << std::showbase << channel_mask;
+                 std::string channel_mask_str = ss.str();
+                 
+                 std::cout << "  audio format=" << audioformat_str;
+                 std::cout << ",channel mask=" << channel_mask_str;
                  std::cout << ",valid bps=" << valid_bitspersample;
                  std::cout << ",data format=" << data_fmt << '\n';
                  bitspersample=valid_bitspersample;
