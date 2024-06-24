@@ -3,6 +3,8 @@
 #include "common/timer.h"
 #include "file/sac.h"
 #include <cstring>
+#include <sstream>
+#include <algorithm>
 
 CmdLine::CmdLine()
 :mode(ENCODE)
@@ -34,7 +36,9 @@ void CmdLine::PrintMode()
   if (opt.profile==0) std::cout << "normal";
   else if (opt.profile==1) std::cout << "high";
   if (opt.optimize) {
-      std::cout << " (" << std::format("{:.1f}%", opt.optimize_fraction*100.0);
+      std::ostringstream oss;
+      oss << " (" << std::fixed << std::setprecision(1) << (opt.optimize_fraction * 100.0) << "%";
+      std::cout << oss.str();
       std::cout << ",n=" << opt.optimize_maxnfunc<<")";
   }
   if (opt.sparse_pcm) std::cout << ", sparse-pcm";
@@ -178,8 +182,8 @@ int CmdLine::Parse(int argc,char *argv[])
           std::vector<std::string>vs;
           StrUtils::SplitToken(val,vs,",");
           if (vs.size()>=2)  {
-            opt.optimize_fraction=std::clamp(std::stod(vs[0]),0.,1.);
-            opt.optimize_maxnfunc=std::clamp(std::stoi(vs[1]),0,10000);
+            opt.optimize_fraction = clamp(std::stod(vs[0]), 0.0, 1.0);
+            opt.optimize_maxnfunc = clamp(std::stoi(vs[1]), 0, 10000);
             if (opt.optimize_fraction>0. && opt.optimize_maxnfunc>0) opt.optimize=1;
           } else std::cerr << "unknown option: " << val << '\n';
          }
@@ -243,9 +247,13 @@ int CmdLine::Process()
            if (time.elapsedS() > 0.0)
             xrate=(myWav.getNumSamples()/double(myWav.getSampleRate()))/time.elapsedS();
 
+           std::ostringstream oss1, oss2, oss3;
+           oss1 << std::fixed << std::setprecision(1) << r;
+           oss2 << std::fixed << std::setprecision(3) << bps;
+           oss3 << std::fixed << std::setprecision(3) << xrate;
            std::cout << "\n  " << infilesize << "->" << outfilesize<< "=";
-           std::cout << std::format("{:.1f}",r) << "% (" << std::format("{:.3f}",bps) <<" bps)";
-           std::cout << "  " << std::format("{:.3f}x",xrate) << '\n';
+           std::cout << oss1.str() << "% (" << oss2.str() <<" bps)";
+           std::cout << "  " << oss3.str() << 'x' << '\n';
            mySac.Close();
          } else std::cout << "could not create\n";
       } else std::cout << "warning: input is not a valid .wav file\n";
