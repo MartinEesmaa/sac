@@ -2,7 +2,6 @@
 #define PROFILE_H
 
 #include <vector>
-#include <variant>
 #include "map.h"
 #include "pred.h"
 
@@ -15,17 +14,29 @@ class SACProfile {
       Remap mymap;
     };
     struct elem {
-      float vmin,vmax;
-      std::variant<float,uint16_t>val;
+      float vmin, vmax;
+      enum Type { FLOAT, UINT16 } type;
+      union {
+        float floatVal;
+        uint16_t uint16Val;
+      } val;
+
+      elem(float vmin, float vmax, float floatVal) : vmin(vmin), vmax(vmax), type(FLOAT) {
+        val.floatVal = floatVal;
+      }
+
+      elem(float vmin, float vmax, uint16_t uint16Val) : vmin(vmin), vmax(vmax), type(UINT16) {
+        val.uint16Val = uint16Val;
+      }
     };
     void add_float(float vmin,float vmax,float val) {
       vparam.push_back(elem{vmin,vmax,val});
     }
     float get_float()
     {
-      float val = get<float>(vparam[index].val);
-      index++;
-      return val;
+      if (vparam[index].type == elem::FLOAT) {
+        return vparam[index].val.floatVal;
+      }
     }
     void add_ols() {
       add_float(0.99,0.9999,0.998); // lambda
