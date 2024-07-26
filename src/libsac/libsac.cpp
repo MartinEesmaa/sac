@@ -299,7 +299,7 @@ void PrintProfile(SacProfile &profile)
     std::cout << std::round(profile.Get(38));
     std::cout << '\n';
     std::cout << "mu ";
-    for (std::size_t i=0;i<std::size(param.vmu0);i++)
+    for (std::size_t i=0;i<sizeof(param.vmu0)/sizeof(param.vmu0[0]);++i)
       std::cout << (param.vmu0[i]*param.vn0[i]) << ' ';
     std::cout << '\n';
     std::cout << "mu_decay ";
