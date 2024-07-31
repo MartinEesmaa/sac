@@ -92,3 +92,5 @@ g++ main.cpp cmdline.cpp common/md5.cpp common/utils.cpp file/file.cpp file/sac.
 ```
 
 To cross-compile MS-DOS 32-bit executable, you can get latest [build-djgpp](https://github.com/andrewwutw/build-djgpp) and also need to pass it with `-fpermissive` flag. It's available for Windows, macOS and Linux.
+
+You can run MS-DOS 32-bit executable by Microsoft MS-DOS version 5.00 and later, DOSBox or FreeDOS to run for it.
