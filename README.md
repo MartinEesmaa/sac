@@ -82,3 +82,13 @@ aarch64-linux-android21-clang++ main.cpp cmdline.cpp ./common/*.cpp ./file/*.cpp
 Android Clang++ can be found there in root directory, example:
 
 `android-ndk-r24/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android21-clang++`
+
+To compile Windows 98 binary, you can get [there](https://github.com/fsb4000/gcc-for-Windows98) and compile it:
+
+You need to use the command, cause it doesn't support multiple files with dots, so it has to be each files one at time.
+
+```
+g++ main.cpp cmdline.cpp common/md5.cpp common/utils.cpp file/file.cpp file/sac.cpp file/wav.cpp libsac/libsac.cpp libsac/map.cpp libsac/pred.cpp libsac/profile.cpp libsac/vle.cpp model/range.cpp pred/rls.cpp -std=c++11 -static -O2 -s -osac
+```
+
+To cross-compile MS-DOS 32-bit executable, you can get latest [build-djgpp](https://github.com/andrewwutw/build-djgpp) and also need to pass it with `-fpermissive` flag. It's available for Windows, macOS and Linux.
