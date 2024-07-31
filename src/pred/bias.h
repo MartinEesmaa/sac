@@ -153,7 +153,7 @@ class BiasEstimator {
     }
     void Update(double val) {
       #ifdef BIAS_ROUND_PRED
-        const double delta=val-std::round(p);
+        const double delta=val-round(p);
       #else
         const double delta=val-p;
       #endif

@@ -84,7 +84,7 @@ void SetParam(Predictor::tparam &param,const SacProfile &profile,bool optimize=f
   param.bias_mu0=profile.Get(43);
   param.bias_mu1=profile.Get(44);
 
-  param.bias_scale=std::round(profile.Get(45));
+  param.bias_scale=round(profile.Get(45));
 }
 
 void FrameCoder::PredictFrame(const SacProfile &profile,int from,int numsamples,bool optimize)
@@ -101,7 +101,7 @@ void FrameCoder::PredictFrame(const SacProfile &profile,int from,int numsamples,
   for (int i=0;i<numsamples;i++) {
     double pd=pr.PredictMaster();
 
-    int32_t p=clamp((int)std::round(pd),minval,maxval);
+    int32_t p=clamp((int)round(pd),minval,maxval);
     pred[0][i]=p+framestats[0].mean;
     error[0][i]=src0[i]-p;
 
@@ -117,7 +117,7 @@ void FrameCoder::PredictFrame(const SacProfile &profile,int from,int numsamples,
     for (int i=0;i<numsamples;i++) {
       double pd=pr.PredictSlave(src0,i,numsamples);
 
-      int32_t p=clamp((int)std::round(pd),minval,maxval);
+      int32_t p=clamp((int)round(pd),minval,maxval);
       pred[1][i]=p+framestats[1].mean;
       error[1][i]=src1[i]-p;
 
@@ -288,15 +288,15 @@ void PrintProfile(SacProfile &profile)
 
     std::cout << '\n';
     std::cout << "lpc ";
-    std::cout << "nA " << std::round(profile.Get(24)) << ' ' << "nB " << std::round(profile.Get(25)) << ' ';
-    std::cout << "nS0 " << std::round(profile.Get(26)) << ' ' << "nS1 " << std::round(profile.Get(27)) << '\n';
+    std::cout << "nA " << round(profile.Get(24)) << ' ' << "nB " << round(profile.Get(25)) << ' ';
+    std::cout << "nS0 " << round(profile.Get(26)) << ' ' << "nS1 " << round(profile.Get(27)) << '\n';
     std::cout << "lms0 ";
-    for (int i=28;i<=30;i++) std::cout << std::round(profile.Get(i)) << ' ';
-    std::cout << std::round(profile.Get(37));
+    for (int i=28;i<=30;i++) std::cout << round(profile.Get(i)) << ' ';
+    std::cout << round(profile.Get(37));
     std::cout << '\n';
     std::cout << "lms1 ";
-    for (int i=31;i<=33;i++) std::cout << std::round(profile.Get(i)) << ' ';
-    std::cout << std::round(profile.Get(38));
+    for (int i=31;i<=33;i++) std::cout << round(profile.Get(i)) << ' ';
+    std::cout << round(profile.Get(38));
     std::cout << '\n';
     std::cout << "mu ";
     for (std::size_t i=0;i<sizeof(param.vmu0)/sizeof(param.vmu0[0]);++i)

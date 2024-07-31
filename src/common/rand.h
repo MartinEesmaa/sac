@@ -11,13 +11,13 @@ class Random {
       return std::uniform_real_distribution<double>{0,1}(engine);
     };
     double r_01open() { // [0,1)
-      return std::uniform_real_distribution<double>{std::nextafter(0.0, std::numeric_limits<double>::max()),1.0}(engine);
+      return std::uniform_real_distribution<double>{nextafter(0.0, std::numeric_limits<double>::max()),1.0}(engine);
     };
     double r_01closed() { // [0,1]
-      return std::uniform_real_distribution<double>{0,std::nextafter(1.0, std::numeric_limits<double>::max())}(engine);
+      return std::uniform_real_distribution<double>{0,nextafter(1.0, std::numeric_limits<double>::max())}(engine);
     };
     double r_int(double imin,double imax) { //double in [imin,imax]
-      return std::uniform_real_distribution<double>{imin,std::nextafter(imax, std::numeric_limits<double>::max())}(engine);
+      return std::uniform_real_distribution<double>{imin,nextafter(imax, std::numeric_limits<double>::max())}(engine);
     };
     uint32_t ru_int(uint32_t imin,uint32_t imax) { //int in [imin,imax]
       return std::uniform_int_distribution<uint32_t>{imin, imax}(engine);
