@@ -1,7 +1,7 @@
 # Sac
 Sac is a state-of-the-art lossless audio compression model
 
-Lossless audio compression is a complex problem, because PCM data is highly non-stationary and uses high sample resolution (typically >=16bit). That's why classic context modelling suffers from context dilution problems. Sac employs a simple OLS-NLMS predictor per frame including bias correction. Prediction residuals are encoded using a sophisticated bitplane coder including SSE and various forms of probability estimations. Meta-parameters of the predictor are optimized with [DDS](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2005WR004723) on by-frame basis. This results in a highly asymmetric codec design. 
+Lossless audio compression is a complex problem, because PCM data is highly non-stationary and uses high sample resolution (typically >=16bit). That's why classic context modelling suffers from context dilution problems. Sac employs a simple OLS-NLMS predictor per frame including bias correction. Prediction residuals are encoded using a sophisticated bitplane coder including SSE and various forms of probability estimations. Meta-parameters of the predictor are optimized with [DDS](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2005WR004723) on by-frame basis. This results in a highly asymmetric codec design.
 
 This program wouldn't exist without the help from the following people (in no particular order):
 
@@ -15,7 +15,7 @@ Matt Mahoney, Dmitry Shkarin, Eugene D. Shelwien, Florin Ghido, Grzegorz Ulacha
 
 ## Technical limitations
 Sac uses fp64 for many internal calculations. The change of compiler options or (cpu-)platform might effect the output. Use at your own risk and for testing purposes only.
- 
+
 ## Benchmarks
 **Sac v0.7.7**
 
@@ -60,7 +60,37 @@ Numbers are bits per sample (bps)
 |velvet|9.803|9.990|10.030|10,461|
 |*Mean*|**8.364**|8.493|8.561|8,817|
 
-## Compile
+## Compilation
+
+### Zig
+
+`sac` can be easily built for your system using the Zig build system. Building requires Zig version ≥`0.13.0`.
+
+0. Ensure you have Zig & git installed
+
+1. Clone this repo & enter the cloned directory:
+
+    ```bash
+    git clone https://github.com/MartinEesmaa/sac/
+    cd sac
+    ```
+
+2. Build the binary with Zig:
+
+    ```bash
+    zig build
+    ```
+    > Note: If you'd like to specify a different build target from your host OS/architecture, simply supply the target flag. Example: `zig build -Dtarget=x86_64-linux-gnu`
+
+3. Find the build binary in `zig-out/bin`. You can install it like so:
+
+    ```bash
+    sudo cp zig-out/bin/sac /usr/local/bin
+    ```
+
+Now, you should be all set to use `sac`.
+
+### GCC/G++
 
 To compile SAC audio codec executable program, use for GCC with G++ command by:
 

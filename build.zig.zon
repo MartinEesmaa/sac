@@ -1,0 +1,5 @@
+.{
+    .name = "sac",
+    .version = "1.0.0",
+    .paths = .{""},
+}
