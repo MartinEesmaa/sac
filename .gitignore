@@ -22,6 +22,12 @@ $RECYCLE.BIN/
 .zig-cache/
 zig-out/
 
+# CMake files
+/[Bb]uild/
+
+# VSCode
+.vscode
+
 # macOS
 .DS_Store
 
