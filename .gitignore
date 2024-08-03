@@ -18,6 +18,13 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# Zig build files
+.zig-cache/
+zig-out/
+
+# macOS
+.DS_Store
+
 # =========================
 # Operating System Files
 # =========================
