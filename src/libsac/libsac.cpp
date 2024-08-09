@@ -379,13 +379,13 @@ double FrameCoder::AnalyseStereoChannel(int ch0, int ch1, int numsamples)
   int32_t *src1=&(samples[ch1][0]);
   int64_t sum0=0,sum1=0,sum_m=0,sum_s=0;
   for (int i=0;i<numsamples;i++) {
-    sum0+=fabs(src0[i]);
-    sum1+=fabs(src1[i]);
+    sum0+=fabs(static_cast<double>(src0[i]));
+    sum1+=fabs(static_cast<double>(src1[i]));
     int32_t m=(src0[i]+src1[i]) / 2;
     int32_t s=(src0[i]-src1[i]);
 
-    sum_m+=fabs(m);
-    sum_s+=fabs(s);
+    sum_m+=fabs(static_cast<double>(m));
+    sum_s+=fabs(static_cast<double>(s));
   }
   int64_t c0 = sum0+sum1;
   int64_t c1 = sum_m+sum_s;

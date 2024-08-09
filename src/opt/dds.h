@@ -32,7 +32,7 @@ class DDS : public Opt {
 
       while (nfunc<nfunc_max) {
         std::vector <int>J; // select J of D variables
-        double p=(1.0-log(nfunc)/log(nfunc_max));
+        double p=(1.0-log(static_cast<double>(nfunc))/log(static_cast<double>(nfunc_max)));
 
         for (int i=0;i<n;i++) {
           if (rand.event(p)) J.push_back(i);

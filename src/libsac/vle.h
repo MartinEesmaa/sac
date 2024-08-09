@@ -127,7 +127,7 @@ class Golomb {
 
       if (m>1)
       {
-        int b=ceil(log(m)/log(2));
+        int b=ceil(log(static_cast<double>(m))/log(2.0));
         int t=(1<<b)-m;
         if (r < t) {
           for (int i=b-2;i>=0;i--) rc.EncodeBitOne(PSCALEh,((r>>i)&1));
@@ -147,7 +147,7 @@ class Golomb {
 
       if (m>1)
       {
-        int b=ceil(log(m)/log(2));
+        int b=ceil(log(static_cast<double>(m))/log(2.0));
         int t=(1<<b)-m;
         for (int i=b-2;i>=0;i--) r=(r<<1)+rc.DecodeBitOne(PSCALEh);
         if (r>=t) r=((r<<1)+rc.DecodeBitOne(PSCALEh))-t;

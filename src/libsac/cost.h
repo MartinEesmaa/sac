@@ -40,7 +40,7 @@ class CostGolomb : public CostFunction {
             //int r=val-q*m;
             nbits+=(q+1);
             if (m>1) {
-              int b=ceil(log(m)/log2);
+              int b=ceil(log(static_cast<double>(m))/log(2.0));
               nbits+=b;
             }
             mean_err.Update(val);
