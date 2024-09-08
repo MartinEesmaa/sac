@@ -93,7 +93,7 @@ int CmdLine::Parse(int argc,char *argv[])
          opt.optimize=0;
        } else if (key=="--HIGH") {
          opt.optimize=1;
-         opt.optimize_fraction=0.05;
+         opt.optimize_fraction=0.075;
          opt.optimize_maxnfunc=100;
        } else if (key=="--VERYHIGH") {
          opt.optimize=1;
@@ -103,8 +103,10 @@ int CmdLine::Parse(int argc,char *argv[])
          opt.optimize=1;
          opt.optimize_fraction=0.50;
          opt.optimize_maxnfunc=1000;
-       } else if (key=="--RESET-OPT") {
-         opt.reset_profile=1;
+       } else if (key=="--INSANE") {
+         opt.optimize=1;
+         opt.optimize_fraction=0.75;
+         opt.optimize_maxnfunc=1500;
        } else if (key=="--OPTIMIZE") {
          if (val=="NO" || val=="0") opt.optimize=0;
          else {
