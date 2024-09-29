@@ -353,7 +353,8 @@ void FrameCoder::Optimize(SacProfile &profile,const std::vector<int>&params_to_o
 
   CostFunction *CostFunc=nullptr;
   switch (opt.optimize_cost)  {
-    case coder_ctx::SearchCost::L1:CostFunc=new CostMeanRMS();break;
+    case coder_ctx::SearchCost::L1:CostFunc=new CostL1();break;
+    case coder_ctx::SearchCost::RMS:CostFunc=new CostRMS();break;
     case coder_ctx::SearchCost::Golomb:CostFunc=new CostGolomb();break;
     case coder_ctx::SearchCost::Entropy:CostFunc=new CostEntropyO0b();break;
     case coder_ctx::SearchCost::Bitplane:CostFunc=new CostBitplane();break;
