@@ -44,11 +44,11 @@ void CmdLine::PrintMode()
 
       std::string cost_str;
       switch (opt.optimize_cost) {
-        case opt.SearchCost::L1:cost_str="L1";break;
-        case opt.SearchCost::RMS:cost_str="rms";break;
-        case opt.SearchCost::Golomb:cost_str="glb";break;
-        case opt.SearchCost::Entropy:cost_str="ent";break;
-        case opt.SearchCost::Bitplane:cost_str="bpn";break;
+        case FrameCoder::coder_ctx::L1:cost_str="L1";break;
+        case FrameCoder::coder_ctx::RMS:cost_str="rms";break;
+        case FrameCoder::coder_ctx::Golomb:cost_str="glb";break;
+        case FrameCoder::coder_ctx::Entropy:cost_str="ent";break;
+        case FrameCoder::coder_ctx::Bitplane:cost_str="bpn";break;
         default:break;
       }
       std::cout << cost_str << ")\n";
