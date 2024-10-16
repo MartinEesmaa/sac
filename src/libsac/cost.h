@@ -3,9 +3,13 @@
 
 #include "vle.h"
 #include "../common/utils.h"
+#include "span.h"
 #include <cmath>
+#include <cstddef>
+#include <vector>
+#include <limits>
 
-typedef std::span<int32_t> span_i32;
+typedef span<int32_t> span_i32;
 
 class CostFunction {
   public:
@@ -20,9 +24,10 @@ class CostL1 : public CostFunction {
       {
         if (buf.size()) {
           int64_t sum=0;
-          for (const auto val:buf)
-            sum+=std::fabs(val);
-          return sum/static_cast<double>(buf.size());
+          for (auto it = buf.begin(); it != buf.end(); ++it) {
+            sum+=std::fabs(*it);
+          }
+          return sum / static_cast<double>(buf.size());
         } else return 0.;
       }
 };
@@ -32,9 +37,10 @@ class CostRMS : public CostFunction {
       double Calc(const span_i32 &buf) const
       {
         if (buf.size()) {
-          int64_t sum=0.0;
-          for (const auto val:buf)
-            sum+=val*val;
+          int64_t sum=0;
+          for (auto it = buf.begin(); it != buf.end(); ++it) {
+            sum += (*it) * (*it);
+          }
           return sqrt(sum/static_cast<double>(buf.size()));
         } else return 0.;
       }
@@ -53,7 +59,8 @@ class CostGolomb : public CostFunction {
         RunWeight rm(alpha);
         int64_t nbits=0;
         if (buf.size()) {
-          for (const auto sval:buf) {
+          for (auto it = buf.begin(); it != buf.end(); ++it) {
+            const int32_t sval = *it;
             const auto m=std::max(static_cast<int32_t>(rm.sum),1);
             const auto uval=MathUtils::S2U(sval);
             int q=uval/m;
@@ -74,23 +81,23 @@ class CostEntropy : public CostFunction {
     double Calc(const span_i32 &buf) const
     {
       double entropy=0.0;
-      if (buf.size())
-      {
+      if (buf.size()) {
         int32_t minval = std::numeric_limits<int32_t>::max();
         int32_t maxval = std::numeric_limits<int32_t>::min();
-        for (const auto val:buf) {
-          if (val>maxval) maxval=val;
-          if (val<minval) minval=val;
+        for (auto it = buf.begin(); it != buf.end(); ++it) {
+          if (*it > maxval) maxval = *it;
+          if (*it < minval) minval = *it;
         }
         auto vmap=[&](int32_t val) {return val-minval;};
 
-        std::vector<int> counts(maxval-minval+1);
-        for (const auto val:buf)
-          counts[vmap(val)]++;
+        std::vector<int> counts(maxval-minval+1,0);
+        for (auto it = buf.begin(); it != buf.end(); ++it) {
+          counts[vmap(*it)]++;
+        }
 
         const double invs=1.0/static_cast<double>(buf.size());
-        for (const auto val:buf) {
-          const double p=counts[vmap(val)]*invs;
+        for (auto it = buf.begin(); it != buf.end(); ++it) {
+          const double p=counts[vmap(*it)]*invs;
           entropy+=p*log(p);
         }
       }

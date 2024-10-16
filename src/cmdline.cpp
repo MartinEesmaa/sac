@@ -280,7 +280,7 @@ int CmdLine::Process()
             double xrate=0.0;
             if (time.elapsedS() > 0.0)
             xrate=(myWav.getNumSamples()/double(myWav.getSampleRate()))/time.elapsedS();
-            std::cout << "\n  Speed " << std::format("{:.3f}x",xrate) << '\n';
+            std::cout << "\n  Speed " << std::fixed << std::setprecision(3) << xrate << "x\n";
 
             std::cout << "  Audio MD5: ";
             bool md5diff=std::memcmp(myWav.md5ctx.digest, md5digest, 16);

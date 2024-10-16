@@ -1,12 +1,15 @@
 #include <algorithm>
 #include <thread>
 #include <future>
+#include <vector>
+#include <iomanip>
 
 #include "libsac.h"
 #include "pred.h"
 #include "../common/timer.h"
 #include <cstring>
 #include "../opt/dds.h"
+#include "span.h"
 
 FrameCoder::FrameCoder(int numchannels,int framesize,const coder_ctx &opt)
 :numchannels_(numchannels),framesize_(framesize),opt(opt)
@@ -245,8 +248,8 @@ double FrameCoder::CalcRemapError(int ch, int numsamples)
 
     CostL1 cost;
 
-    double ent1 = cost.Calc(std::span{&error[ch][0],static_cast<unsigned>(numsamples)});
-    double ent2 = cost.Calc(std::span{&emap[0],static_cast<unsigned>(numsamples)});
+    double ent1 = cost.Calc(span_i32{&error[ch][0],static_cast<unsigned>(numsamples)});
+    double ent2 = cost.Calc(span_i32{&emap[0],static_cast<unsigned>(numsamples)});
     double r=1.0;
     if (ent2!=0.0) r=ent1/ent2;
     if (opt.verbose_level>0) std::cout << "entropy: " << ent1 << ' ' << ent2 << ' ' << r << '\n';
@@ -340,7 +343,7 @@ double FrameCoder::GetCost(const CostFunction *func,std::size_t samples_to_optim
 {
   // return a span over sample error
   const auto span_ch = [=,this](int ch){
-    return std::span{&error[ch][0],samples_to_optimize};
+    return span_i32{&error[ch][0],samples_to_optimize};
   };
 
   double cost=0.0;
@@ -354,8 +357,9 @@ double FrameCoder::GetCost(const CostFunction *func,std::size_t samples_to_optim
       cost += thread.get();
 
   } else {
-    for (int ch=0;ch<numchannels_;ch++)
+    for (int ch=0;ch<numchannels_;ch++) {
       cost += func->Calc(span_ch(ch));
+    }
   }
   return cost;
 }
@@ -530,22 +534,33 @@ void FrameCoder::Unpredict()
 void FrameCoder::Encode()
 {
   if (opt.mt_mode && numchannels_>1)  {
-    std::vector <std::jthread> threads;
-    for (int ch=0;ch<numchannels_;ch++)
-      threads.emplace_back(std::jthread(&FrameCoder::EncodeMonoFrame,this,ch,numsamples_));
-  } else
+    std::vector <std::thread> threads;
+    for (int ch=0;ch<numchannels_;ch++) {
+      threads.emplace_back(&FrameCoder::EncodeMonoFrame,this,ch,numsamples_);
+    }
+    for (auto& t : threads) {
+        t.join();
+    }
+  } else {
     for (int ch=0;ch<numchannels_;ch++) EncodeMonoFrame(ch,numsamples_);
+  }
 }
 
 void FrameCoder::Decode()
 {
   if (opt.mt_mode && numchannels_>1) {
-    std::vector <std::jthread> threads;
-    for (int ch=0;ch<numchannels_;ch++)
-      threads.emplace_back(std::jthread(&FrameCoder::DecodeMonoFrame,this,ch,numsamples_));
-  } else
-    for (int ch=0;ch<numchannels_;ch++)
-      DecodeMonoFrame(ch,numsamples_);
+    std::vector <std::thread> threads;
+    for (int ch=0;ch<numchannels_;ch++) {
+      threads.emplace_back(&FrameCoder::DecodeMonoFrame,this,ch,numsamples_);
+    }
+    for (auto& t : threads) {
+        t.join();
+    }
+  } else {
+    for (int ch=0;ch<numchannels_;ch++) {
+        DecodeMonoFrame(ch, numsamples_);
+    }
+  }
 }
 
 void FrameCoder::EncodeProfile(const SacProfile &profile,std::vector <uint8_t>&buf)
