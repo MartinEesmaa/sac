@@ -9,14 +9,6 @@
 CmdLine::CmdLine()
 :mode(ENCODE)
 {
-  opt.optimize=0;
-  opt.sparse_pcm=1;
-  opt.reset_profile=0;
-  opt.zero_mean=1;
-  opt.max_framelen=8;
-
-  opt.optimize_cost=opt.SearchCost::Entropy;
-  opt.optimize_search=opt.SearchMethod::DDS;
 }
 
 void CmdLine::PrintWav(const AudioFile &myWav)
@@ -35,11 +27,11 @@ void CmdLine::PrintMode()
   std::cout << "  Profile: ";
   std::cout << "mt" << opt.mt_mode;
   std::cout << " " << opt.max_framelen << "s";
+  if (opt.adapt_block) std::cout << " ab";
   if (opt.optimize) {
       std::ostringstream oss;
       oss << " opt (" << std::fixed << std::setprecision(1) << (opt.optimize_fraction * 100.0) << "%";
       std::cout << oss.str();
-      std::cout << ",n=" << opt.optimize_maxnfunc << ",";
 
       std::string cost_str;
       switch (opt.optimize_cost) {
@@ -50,13 +42,16 @@ void CmdLine::PrintMode()
         case FrameCoder::coder_ctx::Bitplane:cost_str="bpn";break;
         default:break;
       }
-      std::cout << cost_str << ")";
+      std::cout << "," << cost_str;
+      std::cout << ",n=" << opt.optimize_maxnfunc;
+      std::cout << ",k=" << opt.optk << ")";
   }
   if (opt.zero_mean) std::cout << " zero-mean";
   if (opt.sparse_pcm) std::cout << " sparse-pcm";
   std::cout << '\n';
   std::cout << std::endl;
 }
+
 
 
 void CmdLine::Split(const std::string &str,std::string &key,std::string &val,const char splitval)
@@ -151,6 +146,9 @@ int CmdLine::Parse(int argc,char *argv[])
               else if (cf=="BPN") opt.optimize_cost = opt.SearchCost::Bitplane;
               else std::cerr << "warning: unknown cost function '" << vs[2] << "'\n";
             }
+            if (vs.size()>=4) {
+              opt.optk=std::clamp(stoi(vs[3]),1,32);
+            }
             if (opt.optimize_fraction>0. && opt.optimize_maxnfunc>0) opt.optimize=1;
             else opt.optimize=0;
           } else std::cerr << "unknown option: " << val << '\n';
@@ -167,6 +165,11 @@ int CmdLine::Parse(int argc,char *argv[])
           else opt.sparse_pcm=1;
        } else if (key=="--STEREO-MS") {
          opt.stereo_ms=1;
+       } else if (key=="--RESET-OPT") {
+         opt.reset_profile=1;
+       } else if (key=="--ADAPT-BLOCK") {
+         if (val=="NO" || val=="0") opt.adapt_block=0;
+         else opt.adapt_block=1;
        } else if (key=="--ZERO-MEAN") {
          if (val=="NO" || val=="0") opt.zero_mean=0;
          else opt.zero_mean=1;

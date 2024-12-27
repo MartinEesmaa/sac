@@ -75,6 +75,110 @@ namespace StrUtils {
 };
 
 namespace MathUtils {
+
+class Cholesky
+  {
+    public:
+      const double ftol=1E-8;
+      Cholesky(int n)
+      :n(n),mchol(n,vec1D(n))
+      {
+
+      }
+      int Factor(const vec2D &matrix,const double nu=0.0)
+      {
+        mchol=matrix; // copy matrix and add regularization
+        for (int i=0;i<n;i++) mchol[i][i]+=nu;
+        for (int i=0;i<n;i++) {
+          for (int j=0;j<=i;j++) {
+            double sum=mchol[i][j];
+            for (int k=0;k<j;k++) sum-=(mchol[i][k]*mchol[j][k]);
+            if (i==j) {
+              if (sum>ftol) mchol[i][i]=sqrt(sum);
+              else return 1;
+            } else mchol[i][j]=sum/mchol[j][j];
+          }
+        }
+        return 0;
+      }
+      void Solve(const vec1D &b,vec1D &x)
+      {
+        for (int i=0;i<n;i++) {
+          double sum=b[i];
+          for (int j=0;j<i;j++) sum-=(mchol[i][j]*x[j]);
+          x[i]=sum/mchol[i][i];
+        }
+        for (int i=n-1;i>=0;i--) {
+          double sum=x[i];
+          for (int j=i+1;j<n;j++) sum-=(mchol[j][i]*x[j]);
+          x[i]=sum/mchol[i][i];
+        }
+      }
+    protected:
+      int n;
+      vec2D mchol;
+  };
+
+  // inverse of pos. def. symmetric matrix
+  class InverseSym
+  {
+    public:
+      InverseSym(int n)
+      :chol(n),n(n),b(n)
+      {
+
+      }
+      void Solve(const vec2D &matrix,vec2D &sol,const double nu=0.0)
+      {
+        if (!chol.Factor(matrix,nu)) {
+          for (int i=0;i<n;i++) {
+             std::fill(std::begin(b),std::end(b),0.0);
+             b[i]=1.0;
+             chol.Solve(b,sol[i]);
+          }
+        };
+      }
+    protected:
+      Cholesky chol;
+      int n;
+      vec1D b;
+  };
+
+  // estimate running covariance of vectors of len n
+  class EstCov {
+    public:
+      EstCov(int n,double alpha=0.998,double init_val=1.0)
+      :mcov(n,vec1D(n)),
+      n(n),alpha(alpha)
+      {
+        for (int i=0;i<n;i++)
+          mcov[i][i]=init_val;
+      }
+      void Update(const vec1D &x)
+      {
+        for (int j=0;j<n;j++) {
+          for (int i=0;i<n;i++) {
+            mcov[j][i] = alpha*mcov[j][i] + (1.0-alpha)*x[i]*x[j];
+          }
+        }
+      }
+      vec2D mcov;
+      int n;
+      double alpha;
+  };
+
+
+      template <typename T>
+      T med3(T a,T b,T c)
+      {
+        if ((a<b && b<c) || (c<b && b<a)) {
+          return b;
+        } else if ((b < a && a < c) || (c < a && a < b)) {
+          return a;
+        } else
+          return c;
+      }
+
       inline int iLog2(int val) {
         int nbits=0;
         while (val>>=1) nbits++;
@@ -116,8 +220,9 @@ namespace MathUtils {
         double dy = y1-y0;
         return idx*(dy/dx)+y0;
       }
-    inline double sgn(double x) {
-      if (x>0) return 1.;
+    template <typename T>
+    T sgn(T x) {
+      if (x>0) return 1;
       if (x<0) return -1;
       return 0;
     }
@@ -146,7 +251,7 @@ namespace miscUtils {
       data[0]=input;
     }
   }
-  inline std::string getTimeStrFromSamples(int numsamples,int samplerate)
+  inline std::string getTimeStrFromSamples(int64_t numsamples,int64_t samplerate)
   {
    std::ostringstream ss;
    int h,m,s,ms;
