@@ -11,7 +11,7 @@ class OLS {
     :x(n),
     chol(n),
     w(n),b(n),mcov(n,vec1D(n)),
-    n(n),kmax(kmax),lambda(lambda),nu(nu),
+    n(n),kmax(kmax),lambda(lambda),nu(n*nu),
     beta_pow(beta_pow),beta_add(beta_add),esum(beta_sum)
     {
       km=0;
@@ -22,8 +22,7 @@ class OLS {
     }
     double Predict()
     {
-      pred=0.0;
-      for (int i=0;i<n;i++) pred+=x[i]*w[i];
+      pred=MathUtils::dot(x.data(),w.data(),n);
       return pred;
     }
 

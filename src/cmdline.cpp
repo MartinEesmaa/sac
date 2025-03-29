@@ -24,31 +24,30 @@ void CmdLine::PrintWav(const AudioFile &myWav)
 
 void CmdLine::PrintMode()
 {
+  const FrameCoder::toptim_cfg &ocfg = opt.ocfg;
   std::cout << "  Profile: ";
   std::cout << "mt" << opt.mt_mode;
   std::cout << " " << opt.max_framelen << "s";
   if (opt.adapt_block) std::cout << " ab";
-  if (opt.optimize) {
-      std::ostringstream oss;
-      oss << " opt (" << std::fixed << std::setprecision(1) << (opt.optimize_fraction * 100.0) << "%";
-      std::cout << oss.str();
-
-      std::string cost_str;
-      switch (opt.optimize_cost) {
-        case FrameCoder::coder_ctx::L1:cost_str="L1";break;
-        case FrameCoder::coder_ctx::RMS:cost_str="rms";break;
-        case FrameCoder::coder_ctx::Golomb:cost_str="glb";break;
-        case FrameCoder::coder_ctx::Entropy:cost_str="ent";break;
-        case FrameCoder::coder_ctx::Bitplane:cost_str="bpn";break;
-        default:break;
-      }
-      std::cout << "," << cost_str;
-      std::cout << ",n=" << opt.optimize_maxnfunc;
-      std::cout << ",k=" << opt.optk << ")";
-  }
   if (opt.zero_mean) std::cout << " zero-mean";
   if (opt.sparse_pcm) std::cout << " sparse-pcm";
   std::cout << '\n';
+  if (opt.optimize) {
+      std::cout << "  Optimize: " << std::format("{:.1f}%", ocfg.fraction*100.0);
+      std::string cost_str;
+      switch (ocfg.optimize_cost) {
+        case FrameCoder::SearchCost::L1:cost_str="L1";break;
+        case FrameCoder::SearchCost::RMS:cost_str="rms";break;
+        case FrameCoder::SearchCost::Golomb:cost_str="glb";break;
+        case FrameCoder::SearchCost::Entropy:cost_str="ent";break;
+        case FrameCoder::SearchCost::Bitplane:cost_str="bpn";break;
+        default:break;
+      }
+      std::cout << "," << cost_str;
+      std::cout << ",n=" << ocfg.maxnfunc;
+      std::cout << ",k=" << ocfg.optk;
+      std::cout << '\n';
+  }
   std::cout << std::endl;
 }
 
@@ -115,41 +114,53 @@ int CmdLine::Parse(int argc,char *argv[])
          opt.optimize=0;
        } else if (key=="--HIGH") {
          opt.optimize=1;
-         opt.optimize_fraction=0.075;
-         opt.optimize_maxnfunc=100;
+         opt.ocfg.fraction=0.075;
+         opt.ocfg.maxnfunc=100;
+         opt.ocfg.dds_cfg.sigma_start=0.2;
+         opt.ocfg.dds_cfg.c_fail_max=30;
        } else if (key=="--VERYHIGH") {
          opt.optimize=1;
-         opt.optimize_fraction=0.20;
-         opt.optimize_maxnfunc=250;
+         opt.ocfg.fraction=0.2;
+         opt.ocfg.maxnfunc=250;
+         opt.ocfg.dds_cfg.sigma_start=0.2;
+       } else if (key=="--EXTRAHIGH") {
+         opt.optimize=1;
+         opt.ocfg.fraction=0.25;
+         opt.ocfg.maxnfunc=500;
+         opt.ocfg.dds_cfg.sigma_start=0.2;
        } else if (key=="--BEST") {
          opt.optimize=1;
-         opt.optimize_fraction=0.50;
-         opt.optimize_maxnfunc=1000;
+         opt.ocfg.fraction=0.50;
+         opt.ocfg.maxnfunc=1000;
+         opt.ocfg.dds_cfg.sigma_start=0.30;
+         opt.ocfg.optimize_cost=FrameCoder::SearchCost::Bitplane;
        } else if (key=="--INSANE") {
          opt.optimize=1;
-         opt.optimize_fraction=0.75;
-         opt.optimize_maxnfunc=1500;
+         opt.ocfg.fraction=0.75;
+         opt.ocfg.maxnfunc=1500;
+         opt.ocfg.dds_cfg.sigma_start=0.30;
+         opt.ocfg.optimize_cost=FrameCoder::SearchCost::Bitplane;
        } else if (key=="--OPTIMIZE") {
          if (val=="NO" || val=="0") opt.optimize=0;
          else {
           std::vector<std::string>vs;
           StrUtils::SplitToken(val,vs,",");
           if (vs.size()>=2)  {
-            opt.optimize_fraction=clamp(stod_safe(vs[0]),0.,1.);
-            opt.optimize_maxnfunc=clamp(std::stoi(vs[1]),0,10000);
+            opt.ocfg.fraction=std::clamp(stod_safe(vs[0]),0.,1.);
+            opt.ocfg.maxnfunc=std::clamp(std::stoi(vs[1]),0,10000);
             if (vs.size()>=3) {
               std::string cf=StrUtils::str_up(vs[2]);
-              if (cf=="L1") opt.optimize_cost = opt.SearchCost::L1;
-              else if (cf=="RMS") opt.optimize_cost = opt.SearchCost::RMS;
-              else if (cf=="GLB") opt.optimize_cost = opt.SearchCost::Golomb;
-              else if (cf=="ENT") opt.optimize_cost = opt.SearchCost::Entropy; //default
-              else if (cf=="BPN") opt.optimize_cost = opt.SearchCost::Bitplane;
+              if (cf=="L1") opt.ocfg.optimize_cost = FrameCoder::SearchCost::L1;
+              else if (cf=="RMS") opt.ocfg.optimize_cost = FrameCoder::SearchCost::RMS;
+              else if (cf=="GLB") opt.ocfg.optimize_cost = FrameCoder::SearchCost::Golomb;
+              else if (cf=="ENT") opt.ocfg.optimize_cost = FrameCoder::SearchCost::Entropy; //default
+              else if (cf=="BPN") opt.ocfg.optimize_cost = FrameCoder::SearchCost::Bitplane;
               else std::cerr << "warning: unknown cost function '" << vs[2] << "'\n";
             }
             if (vs.size()>=4) {
-              opt.optk=std::clamp(stoi(vs[3]),1,32);
+              opt.ocfg.optk=std::clamp(stoi(vs[3]),1,32);
             }
-            if (opt.optimize_fraction>0. && opt.optimize_maxnfunc>0) opt.optimize=1;
+            if (opt.ocfg.fraction>0. && opt.ocfg.maxnfunc>0) opt.optimize=1;
             else opt.optimize=0;
           } else std::cerr << "unknown option: " << val << '\n';
          }
@@ -165,15 +176,19 @@ int CmdLine::Parse(int argc,char *argv[])
           else opt.sparse_pcm=1;
        } else if (key=="--STEREO-MS") {
          opt.stereo_ms=1;
-       } else if (key=="--RESET-OPT") {
-         opt.reset_profile=1;
+       } else if (key=="--OPT-RESET") {
+         opt.ocfg.reset=1;
+       } else if (key=="--OPT-SIGMA") {
+         if (val.length())
+            opt.ocfg.dds_cfg.sigma_start=std::clamp(stod_safe(val),0.,1.);
        } else if (key=="--ADAPT-BLOCK") {
          if (val=="NO" || val=="0") opt.adapt_block=0;
          else opt.adapt_block=1;
        } else if (key=="--ZERO-MEAN") {
          if (val=="NO" || val=="0") opt.zero_mean=0;
          else opt.zero_mean=1;
-       } else std::cerr << "warning: unknown option '" << param << "'\n";
+       }
+       else std::cerr << "warning: unknown option '" << param << "'\n";
     } else {
        if (first) {sinputfile=param;first=false;}
        else soutputfile=param;
@@ -196,7 +211,7 @@ int CmdLine::Process()
       if (myWav.ReadHeader()==0) {
          PrintWav(myWav);
 
-         bool fsupp=(myWav.getBitsPerSample()<=16) && ( (myWav.getNumChannels()==2) || (myWav.getNumChannels()==1));
+         bool fsupp=(myWav.getBitsPerSample()<=24) && ( (myWav.getNumChannels()==2) || (myWav.getNumChannels()==1));
          if (!fsupp)
          {
             std::cerr << "unsupported input format" << std::endl;

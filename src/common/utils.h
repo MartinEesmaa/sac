@@ -1,13 +1,12 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <sstream>
+#include "../global.h"
+
 #include <algorithm>
 #include <string>
-#include <vector>
 #include <cmath>
-#include <iomanip>
-#include "../global.h"
+#include <immintrin.h>
 
 // running exponential smoothing
 // sum=alpha*sum+(1.0-alpha)*val, where 1/(1-alpha) is the mean number of samples considered
@@ -76,6 +75,61 @@ namespace StrUtils {
 
 namespace MathUtils {
 
+#if defined(USE_AVX512)
+inline double dot(const double* x,const double* y, std::size_t n)
+{
+  __m512d sum = _mm512_setzero_pd();
+
+  std::size_t i = 0;
+  for (;i+8 <= n;i+=8)
+  {
+    __m512d vx = _mm512_loadu_pd(&x[i]);
+    __m512d vy = _mm512_loadu_pd(&y[i]);
+    sum = _mm512_fmadd_pd(vx, vy, sum);
+  }
+
+  double total = _mm512_reduce_add_pd(sum);
+
+  for (;i<n;++i)
+      total += x[i] * y[i];
+
+  return total;
+}
+#elif defined(USE_AVX256)
+
+inline double dot(const double* x,const double* y, std::size_t n)
+{
+  double total=0.0;
+  std::size_t i=0;
+  if (n>=4)
+  {
+    __m256d sum = _mm256_setzero_pd();
+    for (;i + 4 <= n;i += 4)
+    {
+      __m256d vx = _mm256_loadu_pd(&x[i]);
+      __m256d vy = _mm256_loadu_pd(&y[i]);
+      sum = _mm256_fmadd_pd(vx, vy, sum);
+    }
+
+    alignas(32) double buffer[4];
+    _mm256_storeu_pd(buffer, sum);
+    total = buffer[0] + buffer[1] + buffer[2] + buffer[3];
+  }
+  for (; i < n; ++i)
+    total += x[i] * y[i];
+  return total;
+}
+#else
+inline double dot(const double* x,const double* y, std::size_t n)
+{
+  double sum=0.0;
+  for (std::size_t i=0;i<n;i++)
+    sum+=x[i]*y[i];
+  return sum;
+}
+#endif
+
+
 class Cholesky
   {
     public:
@@ -87,17 +141,21 @@ class Cholesky
       }
       int Factor(const vec2D &matrix,const double nu=0.0)
       {
-        mchol=matrix; // copy matrix and add regularization
-        for (int i=0;i<n;i++) mchol[i][i]+=nu;
+        mchol=matrix; // copy matrix
         for (int i=0;i<n;i++) {
-          for (int j=0;j<=i;j++) {
+
+          // off-diagonal
+          for (int j=0;j<i;j++) {
             double sum=mchol[i][j];
             for (int k=0;k<j;k++) sum-=(mchol[i][k]*mchol[j][k]);
-            if (i==j) {
-              if (sum>ftol) mchol[i][i]=sqrt(sum);
-              else return 1;
-            } else mchol[i][j]=sum/mchol[j][j];
+            mchol[i][j]=sum/mchol[j][j];
           }
+
+          // diagonal
+          double sum=mchol[i][i]+nu; //add regularization
+          for (int k=0;k<i;k++) sum-=(mchol[i][k]*mchol[i][k]);
+          if (sum>ftol) mchol[i][i]=std::sqrt(sum);
+          else return 1;
         }
         return 0;
       }
@@ -205,14 +263,38 @@ class Cholesky
         else val=-(val>>1);
         return val;
       }
-      inline double L2Dist(const std::vector<double> &vec1,const std::vector<double> &vec2)
+      inline double norm2(const std::vector<double> &vec1,const std::vector<double> &vec2)
       {
-         if (vec1.size()!=vec2.size()) return -1;
+         if (vec1.size()!=vec2.size()) return 0;
          else {
            double sum=0.;
            for (size_t i=0;i<vec1.size();i++) {double t=vec1[i]-vec2[i];sum+=t*t;};
            return sqrt(sum);
          }
+      }
+      inline double mean(const std::vector<double> &vec)
+      {
+        if (vec.size()) {
+          double sum=0.0;
+          for (size_t i=0;i<vec.size();++i)
+            sum+=vec[i];
+          return sum / static_cast<double>(vec.size());
+        }
+        return 0;
+      }
+      inline double Lmean(const std::vector<double> &vec)
+      {
+        if (vec.size()) {
+          double sum0=0.0;
+          double sum1=0.0;
+          for (size_t i=0;i<vec.size();++i) {
+            sum0+=(vec[i]*vec[i]);
+            sum1+=vec[i];
+          }
+          if (sum1>0.0) return sum0 / sum1;
+          else return 0.;
+        }
+        return 0.;
       }
       inline double linear_map_n(int n0,int n1,double y0,double y1,int idx)
       {
@@ -293,6 +375,15 @@ namespace BitUtils {
   void put16LH(uint8_t *buf,uint16_t val);
   void put32LH(uint8_t *buf,uint32_t val);
   std::string U322Str(uint32_t val);
+
+  inline int32_t count_bits32(uint32_t m)
+  {
+    #ifdef __GNUC__
+      return m == 0 ? 0 : (32 - __builtin_clz(m));
+    #else
+      return std::bit_width(m);
+    #endif
+  }
 }
 
 #endif // UTILS_H

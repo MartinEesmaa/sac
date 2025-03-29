@@ -45,10 +45,9 @@ class CostRMS : public CostFunction {
 };
 
 
-// estimate avg. bytes per sample with a simple golomb model
+// estimate bytes per frame with a simple golomb model
 class CostGolomb : public CostFunction {
   const double alpha=0.97; // critical
-  const double log2=log(2.0);
   public:
       CostGolomb(){};
       double Calc(span_ci32 buf) const
@@ -63,10 +62,12 @@ class CostGolomb : public CostFunction {
             int q=uval/m;
             //int r=val-q*m;
             nbits+=(q+1);
-            if (m>1) nbits+=ceil(log(static_cast<double>(m))/log(2.0));
+            if (m>1) {
+              nbits+=BitUtils::count_bits32(m);
+            }
             rm.Update(uval);
           }
-          return nbits/static_cast<double>(8*buf.size());
+          return nbits/(8.*buf.size());
         } else return 0;
       }
 };
@@ -102,6 +103,31 @@ class CostEntropy : public CostFunction {
     }
 };
 
+/*class StaticBitModel {
+  public:
+    StaticBitModel()
+    :pr(2,vec1D(PSCALE))
+    {
+      for (std::size_t i=1;i<PSCALE;i++)
+      {
+        double p1 = static_cast<double>(i)/static_cast<double>(PSCALE);
+        double t0 = -std::log2(1.0-p1);
+        double t1 = -std::log2(p1);
+        pr[0][i]= t0;
+        pr[1][i]= t1;
+      }
+      ResetCount();
+    }
+    void ResetCount(){nbits=0;};
+    void EncodeBitOne(uint32_t p1,int bit)
+    {
+      nbits += pr[bit][p1];
+    }
+    auto EncodeP1_Func() {return [&](uint32_t p1,int bit) {return EncodeBitOne(p1,bit);};}; // stupid C++
+
+  double nbits;
+  vec2D pr;
+};*/
 
 class CostBitplane : public CostFunction {
  public:
@@ -117,13 +143,23 @@ class CostBitplane : public CostFunction {
        if (val>vmax) vmax=val;
        ubuf[i]=val;
     }
+    #if 1
     BufIO iobuf;
     RangeCoderSH rc(iobuf);
     rc.Init();
-    BitplaneCoder bc(rc,MathUtils::iLog2(vmax),numsamples);
-    bc.Encode(&ubuf[0]);
+    BitplaneCoder bc_rc(MathUtils::iLog2(vmax),numsamples);
+    bc_rc.Encode(rc.encode_p1,&ubuf[0]);
     rc.Stop();
-    return iobuf.GetBufPos();
+    double c0=iobuf.GetBufPos();
+    #else
+
+    StaticBitModel bm;
+    BitplaneCoder bc_bit(MathUtils::iLog2(vmax),numsamples);
+    bc_bit.Encode(bm.EncodeP1_Func(),&ubuf[0]);
+
+    double c0=bm.nbits/8.0;
+    #endif
+    return c0;
   }
 };
 
