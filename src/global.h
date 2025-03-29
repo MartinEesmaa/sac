@@ -26,7 +26,11 @@ typedef std::span<const double> span_f64;
 
 
 #if defined(__x86_64__) || defined(__i386__)
-    #define USE_AVX256
+    #ifndef __ANDROID__
+        #define USE_AVX256
+    #else
+        #undef USE_AVX256
+    #endif
 #else
     #undef USE_AVX256
 #endif

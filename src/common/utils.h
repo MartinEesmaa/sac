@@ -6,7 +6,12 @@
 #include <algorithm>
 #include <string>
 #include <cmath>
+
+#if defined(__x86_64__) || defined(__i386__)
+#ifndef __ANDROID__
 #include <immintrin.h>
+#endif
+#endif
 
 // running exponential smoothing
 // sum=alpha*sum+(1.0-alpha)*val, where 1/(1-alpha) is the mean number of samples considered
