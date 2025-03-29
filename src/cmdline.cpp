@@ -33,7 +33,11 @@ void CmdLine::PrintMode()
   if (opt.sparse_pcm) std::cout << " sparse-pcm";
   std::cout << '\n';
   if (opt.optimize) {
-      std::cout << "  Optimize: " << std::format("{:.1f}%", ocfg.fraction*100.0);
+      std::ostringstream oss;
+      oss.precision(1);
+      oss << std::fixed;
+      oss << (ocfg.fraction * 100.0);
+      std::cout << "  Optimize: " << oss.str() << "%";
       std::string cost_str;
       switch (ocfg.optimize_cost) {
         case FrameCoder::SearchCost::L1:cost_str="L1";break;

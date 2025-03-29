@@ -83,7 +83,13 @@ class OptDDS : public Opt {
           }
           #endif
         nfunc++;
-        if (verbose) std::cout << " DDS " << std::format("{:5}",nfunc) << ": " << std::format("{:0.4f}",fbest) << " s=" << sigma << "\r";
+        if (verbose) {
+          std::ostringstream oss;
+          oss << " DDS " << std::setw(5) << std::right << nfunc;
+          oss << ": " << std::fixed << std::setprecision(4) << fbest;
+          oss << " s=" << sigma << "\r";
+          std::cout << oss.str();
+        }
       }
       if (verbose) std::cout << '\n';
       return {fbest,xbest};
