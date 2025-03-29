@@ -108,6 +108,4 @@ class Opt {
     const int ndim;
 };
 
-const std::string Opt::SLOPT_VERSION = "0.1.1";
-
 #endif
