@@ -1,7 +1,6 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
-//#include "windows.h"
 #include <iostream>
 #include <algorithm>
 #include <fstream>
@@ -27,6 +26,7 @@ typedef std::span<const double> span_f64;
 
 #if defined(__x86_64__) || defined(__i386__)
     #ifndef __ANDROID__
+        #if (__GNUC__ > 4) || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9)
         #define USE_AVX256
     #else
         #undef USE_AVX256
@@ -37,4 +37,5 @@ typedef std::span<const double> span_f64;
 
 //#define USE_AVX512
 
+#endif
 #endif
