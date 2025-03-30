@@ -12,7 +12,6 @@ class Opt {
     struct tboxconst {
       double xmin,xmax;
     };
-    inline static const std::string SLOPT_VERSION="0.2.0";
     typedef std::pair<double,vec1D> ppoint;
     typedef std::vector<ppoint> opt_points;
     typedef std::vector <tboxconst> box_const;
