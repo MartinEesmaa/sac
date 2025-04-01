@@ -8,7 +8,8 @@
 #include <fstream>
 #include <cstdint>
 
-class AudioFile {
+class AudioFile
+{
   public:
     AudioFile():samplerate(0),bitspersample(0),numchannels(0),numsamples(0),kbps(0){};
     AudioFile(const AudioFile &file)

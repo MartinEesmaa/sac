@@ -1,6 +1,7 @@
 #ifndef MODEL_H
 #define MODEL_H
 
+#include <algorithm>
 
 // probability precision
 #define PBITS   (15)
