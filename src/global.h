@@ -8,7 +8,7 @@
 #include <iomanip>
 #include <chrono>
 #include <vector>
-#include <span>
+#include "libsac/span.h"
 
 #ifndef M_PI
 #define M_PI (3.14159265358979323846)
@@ -19,9 +19,9 @@
 typedef std::vector<double> vec1D;
 typedef std::vector<std::vector<double>> vec2D;
 typedef std::vector <double*>ptr_vec1D;
-typedef std::span<int32_t> span_i32;
-typedef std::span<const int32_t> span_ci32;
-typedef std::span<const double> span_f64;
+typedef span<int32_t> span_i32;
+typedef span<const int32_t> span_ci32;
+typedef span<const double> span_f64;
 
 
 #if defined(__x86_64__) || defined(__i386__)

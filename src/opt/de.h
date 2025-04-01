@@ -78,22 +78,30 @@ class OptDE : public Opt {
 
           // mutation
           std::vector<int> e(pop.size());
-          std::iota(std::begin(e),std::end(e),0);std::erase(e,iagent);
+          std::iota(std::begin(e), std::end(e), 0);
+          e.erase(std::remove(e.begin(), e.end(), iagent), e.end());
 
           vec1D xm;
           if (cfg.mut_method==BEST1BIN) {
-            int xr1 = e[rand.ru_int(0,e.size()-1)];std::erase(e,xr1);
-            int xr2 = e[rand.ru_int(0,e.size()-1)];std::erase(e,xr2);
-            xm = mut_1bin(xbest,pop[xr1].second,pop[xr2].second,mF);
+            int xr1 = e[rand.ru_int(0, e.size() - 1)];
+            e.erase(std::remove(e.begin(), e.end(), xr1), e.end());
+            int xr2 = e[rand.ru_int(0, e.size() - 1)];
+            e.erase(std::remove(e.begin(), e.end(), xr2), e.end());
+            xm = mut_1bin(xbest, pop[xr1].second, pop[xr2].second, mF);
           } else if (cfg.mut_method==RAND1BIN) {
-            int xr0 = e[rand.ru_int(0,e.size()-1)];std::erase(e,xr0);
-            int xr1 = e[rand.ru_int(0,e.size()-1)];std::erase(e,xr1);
-            int xr2 = e[rand.ru_int(0,e.size()-1)];std::erase(e,xr2);
-            xm = mut_1bin(pop[xr0].second,pop[xr1].second,pop[xr2].second,mF);
+            int xr0 = e[rand.ru_int(0, e.size() - 1)];
+            e.erase(std::remove(e.begin(), e.end(), xr0), e.end());
+            int xr1 = e[rand.ru_int(0, e.size() - 1)];
+            e.erase(std::remove(e.begin(), e.end(), xr1), e.end());
+            int xr2 = e[rand.ru_int(0, e.size() - 1)];
+            e.erase(std::remove(e.begin(), e.end(), xr2), e.end());
+            xm = mut_1bin(pop[xr0].second, pop[xr1].second, pop[xr2].second, mF);
           } else if (cfg.mut_method==CUR1BEST) {
-            int xr1 = e[rand.ru_int(0,e.size()-1)];std::erase(e,xr1);
-            int xr2 = e[rand.ru_int(0,e.size()-1)];std::erase(e,xr2);
-            xm = mut_curbest(xbest,pop[iagent].second,pop[xr1].second,pop[xr2].second,mF);
+            int xr1 = e[rand.ru_int(0, e.size() - 1)];
+            e.erase(std::remove(e.begin(), e.end(), xr1), e.end());
+            int xr2 = e[rand.ru_int(0, e.size() - 1)];
+            e.erase(std::remove(e.begin(), e.end(), xr2), e.end());
+            xm = mut_curbest(xbest, pop[iagent].second, pop[xr1].second, pop[xr2].second, mF);
           }
 
           // cross-over
@@ -129,7 +137,7 @@ class OptDE : public Opt {
     }
     double gen_CR(double mCR)
     {
-      return std::clamp(rand.r_norm(mCR,0.1),0.01,1.0);
+      return clamp(rand.r_norm(mCR,0.1),0.01,1.0);
     }
     double gen_F(double mF)
     {
@@ -140,7 +148,7 @@ class OptDE : public Opt {
         double t=rand.r_norm(mF,0.1);
       #endif
 
-      return std::clamp(t,0.01,1.2);
+      return clamp(t,0.01,1.2);
     }
 
     vec1D mut_1bin(const vec1D &xb,const vec1D &x1,const vec1D &x2,double F)

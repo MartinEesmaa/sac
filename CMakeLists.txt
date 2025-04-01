@@ -50,7 +50,7 @@ endif()
 add_executable(sac ${SOURCE_FILES})
 
 # Set compiler flags based on the compiler being used
-target_compile_options(sac PRIVATE -Wall -O3 -std=c++11)
+target_compile_options(sac PRIVATE -Wall -O3 -std=c++11 -fpermissive)
 
 # Link libc++
 target_link_libraries(sac stdc++)

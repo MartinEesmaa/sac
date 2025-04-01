@@ -259,8 +259,8 @@ double FrameCoder::CalcRemapError(int ch, int numsamples)
 
     CostL1 cost;
 
-    double ent1 = cost.Calc(span_i32{&error[ch][0],static_cast<unsigned>(numsamples)});
-    double ent2 = cost.Calc(span_i32{&emap[0],static_cast<unsigned>(numsamples)});
+    double ent1 = cost.Calc(span_ci32{emap.data(), static_cast<unsigned>(numsamples)});
+    double ent2 = cost.Calc(span_ci32{&emap[0],static_cast<unsigned>(numsamples)});
     double r=1.0;
     if (ent2!=0.0) r=ent1/ent2;
     if (opt.verbose_level>0) std::cout << "  cost pcm-model: " << ent1 << ' ' << ent2 << ' ' << r << '\n';
@@ -363,14 +363,14 @@ double FrameCoder::GetCost(const CostFunction *func,std::size_t samples_to_optim
 
     std::vector <std::future<double>> threads;
     for (int ch=0;ch<numchannels_;ch++)
-        threads.emplace_back(std::async([=]{return func->Calc(span_ch(ch));}));
+        threads.emplace_back(std::async([=]{return func->Calc(span_ci32(span_ch(ch).data(), span_ch(ch).size()));}));
 
     for (auto &thread : threads)
       cost += thread.get();
 
   } else {
     for (int ch=0;ch<numchannels_;ch++) {
-      cost += func->Calc(span_ch(ch));
+      cost += func->Calc(span_ci32(span_ch(ch).data(), span_ch(ch).size()));
     }
   }
   return cost;
@@ -708,7 +708,7 @@ void Codec::ScanFrames(Sac &mySac)
 }
 
 
-std::pair<double,double> Codec::AnalyseSparse(std::span<const int32_t> buf)
+std::pair<double,double> Codec::AnalyseSparse(span<const int32_t> buf)
 {
   SparsePCM spcm;
   spcm.Analyse(buf);
@@ -745,8 +745,7 @@ std::vector<Codec::tsub_frame> Codec::Analyse(const std::vector <std::vector<int
   int samples_processed=0;
   int nblock=0;
 
-  Codec::tsub_frame curframe;
-
+  Codec::tsub_frame curframe(-1, 0, 0);
   while (samples_processed < samples_read)
   {
     int samples_left = samples_read-samples_processed;
@@ -754,7 +753,10 @@ std::vector<Codec::tsub_frame> Codec::Analyse(const std::vector <std::vector<int
     double avg_cost=0,avg_used=0;
     for (unsigned ch=0;ch<samples.size();ch++)
     {
-      auto [fused,fcost]=AnalyseSparse(std::span{&samples[ch][samples_processed],static_cast<unsigned>(samples_block)});
+      auto fused_span = span<const int>(&samples[ch][samples_processed], samples_block);
+      auto result = AnalyseSparse(fused_span);
+      auto fused = result.first;
+      auto fcost = result.second;
       avg_cost+=fcost;
       avg_used+=fused;
     }
@@ -826,7 +828,7 @@ void Codec::EncodeFile(Wav &myWav,Sac &mySac)
         int min_frame_len=myWav.getSampleRate()*3;
         sub_frames=Analyse(csamples,block_len,min_frame_len,samplesread);
       } else {
-        sub_frames.push_back({0,0,samplesread});
+        sub_frames.push_back(tsub_frame(0, 0, samplesread));
       }
 
       for (auto &subframe:sub_frames)

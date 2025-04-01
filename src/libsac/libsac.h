@@ -79,6 +79,7 @@ class Codec {
     int state=-1;
     int start=0;
     int length=0;
+    tsub_frame(int s, int e, int sm) : state(s), start(e), length(sm) {}
   };
   public:
     Codec(){};
@@ -90,7 +91,7 @@ class Codec {
   private:
     std::vector<Codec::tsub_frame> Analyse(const std::vector <std::vector<int32_t>>&samples,int blocksamples,int min_frame_length,int samples_read);
     void PushState(std::vector<Codec::tsub_frame> &sub_frames,Codec::tsub_frame &curframe,int min_frame_length,int block_state,int samples_block);
-    std::pair<double,double> AnalyseSparse(std::span<const int32_t> buf);
+    std::pair<double,double> AnalyseSparse(span<const int32_t> buf);
     void PrintProgress(int samplesprocessed,int totalsamples);
     FrameCoder::coder_ctx opt_;
     //int framesize;

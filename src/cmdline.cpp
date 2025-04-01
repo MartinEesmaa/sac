@@ -150,8 +150,8 @@ int CmdLine::Parse(int argc,char *argv[])
           std::vector<std::string>vs;
           StrUtils::SplitToken(val,vs,",");
           if (vs.size()>=2)  {
-            opt.ocfg.fraction=std::clamp(stod_safe(vs[0]),0.,1.);
-            opt.ocfg.maxnfunc=std::clamp(std::stoi(vs[1]),0,10000);
+            opt.ocfg.fraction=clamp(stod_safe(vs[0]),0.,1.);
+            opt.ocfg.maxnfunc=clamp(std::stoi(vs[1]),0,10000);
             if (vs.size()>=3) {
               std::string cf=StrUtils::str_up(vs[2]);
               if (cf=="L1") opt.ocfg.optimize_cost = FrameCoder::SearchCost::L1;
@@ -162,7 +162,7 @@ int CmdLine::Parse(int argc,char *argv[])
               else std::cerr << "warning: unknown cost function '" << vs[2] << "'\n";
             }
             if (vs.size()>=4) {
-              opt.ocfg.optk=std::clamp(stoi(vs[3]),1,32);
+              opt.ocfg.optk=clamp(stoi(vs[3]),1,32);
             }
             if (opt.ocfg.fraction>0. && opt.ocfg.maxnfunc>0) opt.optimize=1;
             else opt.optimize=0;
@@ -184,7 +184,7 @@ int CmdLine::Parse(int argc,char *argv[])
          opt.ocfg.reset=1;
        } else if (key=="--OPT-SIGMA") {
          if (val.length())
-            opt.ocfg.dds_cfg.sigma_start=std::clamp(stod_safe(val),0.,1.);
+            opt.ocfg.dds_cfg.sigma_start=clamp(stod_safe(val),0.,1.);
        } else if (key=="--ADAPT-BLOCK") {
          if (val=="NO" || val=="0") opt.adapt_block=0;
          else opt.adapt_block=1;

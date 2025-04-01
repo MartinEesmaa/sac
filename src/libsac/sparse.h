@@ -27,7 +27,7 @@ class SparsePCM {
     :minval(0),maxval(0),fraction_used(0.),fraction_cost(0.)
     {
     };
-    void Analyse(std::span<const int32_t> buf)
+    void Analyse(span<const int32_t> buf)
     {
       minval = std::numeric_limits<int32_t>::max();
       maxval = std::numeric_limits<int32_t>::min();

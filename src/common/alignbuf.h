@@ -1,6 +1,8 @@
 #ifndef ALIGNBUF_H
 #define ALIGNBUF_H
 
+#include <malloc.h>
+#include <stdexcept>
 template <typename T, std::size_t align_t=64>
 struct align_alloc {
     using value_type = T;
@@ -18,12 +20,19 @@ struct align_alloc {
     constexpr align_alloc(const align_alloc<U, align_t> &) noexcept {}
 
     T* allocate(std::size_t n) {
-        auto ptr = static_cast<T*>(::operator new(n * sizeof(T), std::align_val_t(align_t)));
-        return ptr;
+        if (n == 0) {
+            return nullptr;
+        }
+
+        void* ptr = _aligned_malloc(n * sizeof(T), align_t);
+        if (!ptr) {
+            throw std::bad_alloc();
+        }
+        return static_cast<T*>(ptr);
     }
 
     void deallocate(T* p, std::size_t n) noexcept {
-        ::operator delete(p, n * sizeof(T), std::align_val_t(align_t));
+        _aligned_free(p);
     }
 };
 
